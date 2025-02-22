@@ -4,13 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        'yt-black': '#0f0f0f',
-        'yt-dark': '#272727',
-        'yt-secondary': '#303030',
+        'bg-primary': 'var(--bg-primary)',
+        'bg-secondary': 'var(--bg-secondary)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'hover-bg': 'var(--hover-bg)',
+        'border-color': 'var(--border-color)',
+        'video-hover': 'var(--video-hover)',
+        'sidebar-bg': 'var(--sidebar-bg)',
       }
     },
   },
-  plugins: [
-    require('@tailwindcss/line-clamp'),
-  ]
+  plugins: []
 }; 

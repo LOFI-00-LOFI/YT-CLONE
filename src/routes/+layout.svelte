@@ -19,18 +19,13 @@
   }
 </script>
 
-<div class="h-screen flex flex-col bg-yt-black text-white">
+<div class="h-screen flex flex-col bg-bg-primary text-text-primary">
   <Header {toggleSidebar} />
   
   <div class="flex flex-1 overflow-hidden">
-    <div 
-      class:absolute={isWatchPage} 
-      class="z-50 h-[calc(100vh-56px)] bg-yt-black"
-    >
-      <Sidebar open={$sidebarOpen} />
-    </div>
+    <Sidebar open={$sidebarOpen} />
     
-    <main class="flex-1 overflow-y-auto pt-4">
+    <main class="flex-1 overflow-y-auto">
       <slot />
     </main>
   </div>

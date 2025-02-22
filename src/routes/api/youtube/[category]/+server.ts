@@ -1,8 +1,8 @@
-import { YOUTUBE_API_KEY } from '$env/static/private';
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, params }) => {
+  const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
   const category = params.category;
   const queryParams = url.searchParams;
   

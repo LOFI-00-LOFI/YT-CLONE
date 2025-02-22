@@ -108,7 +108,7 @@
       {#if !showAllComments && comments.length > 5}
         <button 
           class="text-sm font-medium text-gray-400 hover:text-white py-2 px-4 rounded-full bg-yt-dark hover:bg-yt-secondary w-fit mx-auto"
-          on:click={() => showAllComments = true}
+          onclick={() => showAllComments = true}
         >
           Show more comments
         </button>

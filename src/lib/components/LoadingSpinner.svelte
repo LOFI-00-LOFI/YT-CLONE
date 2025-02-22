@@ -10,7 +10,7 @@
 
 {#key size}
   <div 
-    class="animate-spin rounded-full border-b-2 border-white {sizes[size]}"
+    class="animate-spin rounded-full border-b-2 border-text-primary {sizes[size]}"
     transition:fade
-  />
+  ></div>
 {/key} 

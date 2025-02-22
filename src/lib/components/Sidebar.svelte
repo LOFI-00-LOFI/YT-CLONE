@@ -1,4 +1,5 @@
 <script lang="ts">
+  /// <reference types="svelte" />
   import { 
     Home, 
     Film, 
@@ -33,8 +34,8 @@
 
   const mainLinks = [
     { icon: Home, label: "Home", category: "home" },
-    { icon: Film, label: "Shorts", category: "shorts" },
-    { icon: Users, label: "Subscriptions", category: "subscriptions" }
+    { icon: Film, label: "Shorts", category: "" },
+    { icon: Users, label: "Subscriptions", category: "" }
   ];
 
   const secondaryLinks = [
@@ -73,70 +74,73 @@
 <!-- Full Sidebar -->
 <aside
   class="fixed md:sticky top-14 left-0 z-30 h-[calc(100vh-3.5rem)] 
-         bg-yt-black overflow-y-auto pb-4 transition-all duration-200
+         bg-bg-primary overflow-y-auto pb-4 transition-all duration-200
          {open ? 'w-60' : 'w-0 md:w-[72px]'}"
+  class:md:relative={isWatchPage}
 >
-  <!-- Only show content if sidebar is open on watch page -->
-  {#if open || !isWatchPage}
-    <div class="px-3 py-1 {!open && 'hidden md:block'}">
-      <!-- Main Links -->
-      <div class="{open ? 'border-b border-yt-dark pb-3' : ''}">
-        {#each mainLinks as link}
+  <!-- Only show content if sidebar is open on mobile or always show on desktop -->
+  <div class="px-3 py-1 {!open && 'hidden md:block'}">
+    <!-- Main Links -->
+    <div class="{open ? 'border-b border-border-color pb-3' : ''}">
+      {#each mainLinks as link}
+        <button
+          class="w-full flex items-center gap-6 px-3 py-2 hover:bg-hover-bg rounded-lg"
+          class:justify-center={!open}
+          class:bg-hover-bg={isHomePage && link.category === 'home'}
+          onclick={() => handleClick(link.category)}
+        >
+          <svelte:component this={link.icon} size={24} class="text-text-primary" />
+          {#if open}
+            <span class="text-text-primary">{link.label}</span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+
+    <!-- Secondary Links -->
+    {#if open}
+      <div class="border-b border-border-color py-3">
+        {#each secondaryLinks as link}
           <button
-            class="w-full flex items-center gap-6 px-3 py-2 hover:bg-yt-dark rounded-lg"
-            class:justify-center={!open}
-            class:bg-yt-dark={$currentCategory === link.category}
-            on:click={() => handleClick(link.category)}
+            class="w-full flex items-center gap-6 px-3 py-2 hover:bg-hover-bg rounded-lg"
+            class:bg-hover-bg={$currentCategory === link.category}
+            onclick={() => handleClick(link.category)}
           >
-            <svelte:component this={link.icon} size={24} />
-            {#if open}
-              <span>{link.label}</span>
-            {/if}
+            <svelte:component this={link.icon} size={24} class="text-text-primary" />
+            <span class="text-text-primary">{link.label}</span>
           </button>
         {/each}
       </div>
+    {/if}
 
-      <!-- Secondary Links -->
-      {#if open}
-        <div class="border-b border-yt-dark py-3">
-          {#each secondaryLinks as link}
-            <button
-              class="w-full flex items-center gap-6 px-3 py-2 hover:bg-yt-dark rounded-lg"
-              class:bg-yt-dark={$currentCategory === link.category}
-              on:click={() => handleClick(link.category)}
-            >
-              <svelte:component this={link.icon} size={24} />
-              <span>{link.label}</span>
-            </button>
-          {/each}
-        </div>
-      {/if}
-
-      <!-- Explore -->
-      {#if open}
-        <div class="pt-3">
-          <h3 class="px-3 mb-1 text-lg">Explore</h3>
-          {#each exploreLinks as link}
-            <button
-              class="w-full flex items-center gap-6 px-3 py-2 hover:bg-yt-dark rounded-lg"
-              class:bg-yt-dark={$currentCategory === link.category}
-              on:click={() => handleClick(link.category)}
-            >
-              <svelte:component this={link.icon} size={24} />
-              <span>{link.label}</span>
-            </button>
-          {/each}
-        </div>
-      {/if}
-    </div>
-  {/if}
+    <!-- Explore -->
+    {#if open}
+      <div class="pt-3">
+        <h3 class="px-3 mb-1 text-lg text-text-primary">Explore</h3>
+        {#each exploreLinks as link}
+          <button
+            class="w-full flex items-center gap-6 px-3 py-2 hover:bg-hover-bg rounded-lg"
+            class:bg-hover-bg={$currentCategory === link.category}
+            onclick={() => handleClick(link.category)}
+          >
+            <svelte:component this={link.icon} size={24} class="text-text-primary" />
+            <span class="text-text-primary">{link.label}</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
+  </div>
 </aside>
 
 <!-- Overlay for mobile -->
 {#if open}
   <div
     class="md:hidden fixed inset-0 z-20 bg-black bg-opacity-50"
-    on:click={() => open = false}
+    role="button"
+    tabindex="0"
+    onclick={() => open = false}
+    onkeydown={e => e.key === 'Escape' && (open = false)}
+    aria-label="Close sidebar"
   ></div>
 {/if}
 
@@ -148,10 +152,10 @@
     width: 8px;
   }
   aside::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--bg-primary);
   }
   aside::-webkit-scrollbar-thumb {
-    background-color: #666;
+    background: var(--text-secondary);
     border-radius: 4px;
   }
 </style> 

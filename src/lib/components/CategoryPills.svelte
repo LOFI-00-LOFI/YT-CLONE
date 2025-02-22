@@ -31,14 +31,14 @@
   }
 </script>
 
-<div class="sticky top-[-20px] z-10 bg-yt-black pb-4">
+<div class="sticky top-[0] z-10 bg-bg-primary">
   <div class="relative flex items-center">
     <!-- Left scroll button -->
     <button
-      class="absolute left-0 z-10 p-2 bg-gradient-to-r from-yt-black to-transparent"
-      on:click={() => scroll('left')}
+      class="absolute left-0 z-10 p-2 bg-gradient-to-r from-bg-primary to-transparent"
+      onclick={() => scroll('left')}
     >
-      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <svg class="w-6 h-6 text-text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <path d="M15 18l-6-6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>
@@ -51,10 +51,11 @@
       {#each categories as { id, label }}
         <button 
           class="px-3 py-1.5 rounded-lg whitespace-nowrap text-sm font-medium transition-colors flex-shrink-0"
-          class:bg-white={selectedCategory === id}
-          class:text-black={selectedCategory === id}
-          class:bg-yt-dark={selectedCategory !== id}
-          on:click={() => selectCategory(id)}
+          class:bg-text-primary={selectedCategory === id}
+          class:text-bg-primary={selectedCategory === id}
+          class:bg-bg-secondary={selectedCategory !== id}
+          class:text-text-primary={selectedCategory !== id}
+          onclick={() => selectCategory(id)}
         >
           {label}
         </button>
@@ -63,10 +64,10 @@
 
     <!-- Right scroll button -->
     <button
-      class="absolute right-0 z-10 p-2 bg-gradient-to-l from-yt-black to-transparent"
-      on:click={() => scroll('right')}
+      class="absolute right-0 z-10 p-2 bg-gradient-to-l from-bg-primary to-transparent"
+      onclick={() => scroll('right')}
     >
-      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <svg class="w-6 h-6 text-text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor">
         <path d="M9 18l6-6-6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>

@@ -4,13 +4,19 @@
     Search,
     Video,
     Bell, 
+    Sun,
+    Moon,
     X 
   } from 'lucide-svelte';
   import { isSearchExpanded } from '$lib/stores/ui';
+  import { isDarkMode } from '$lib/stores/theme';
   import { goto } from '$app/navigation';
   
-  export let toggleSidebar: () => void;
-  let searchQuery = '';
+  let { toggleSidebar } = $props<{
+    toggleSidebar: () => void;
+  }>();
+  
+  let searchQuery = $state('');
 
   function handleSearch(e: Event) {
     e.preventDefault();
@@ -21,87 +27,103 @@
   }
 
   function toggleSearch() {
-    isSearchExpanded.update(value => !value);
+    isSearchExpanded.update((value: boolean) => !value);
   }
+
+  function toggleTheme() {
+    isDarkMode.update((value: boolean) => !value);
+    document.documentElement.setAttribute('data-theme', $isDarkMode ? 'dark' : 'light');
+  }
+
+  // Set initial theme
+  $effect(() => {
+    document.documentElement.setAttribute('data-theme', $isDarkMode ? 'dark' : 'light');
+  });
 </script>
 
-<header class="bg-yt-black flex justify-between items-center px-4 h-14 fixed w-full top-0 z-50">
+<header class="bg-bg-primary border-b border-border-color flex justify-between items-center px-4 h-14 fixed w-full top-0 z-50">
   <div class="flex items-center gap-4" class:hidden={$isSearchExpanded}>
     <button 
-      class="p-2 hover:bg-yt-dark rounded-full"
-      on:click={toggleSidebar}
+      class="p-2 hover:bg-hover-bg rounded-full"
+      onclick={toggleSidebar}
     >
-      <Menu size={24} />
+      <Menu size={24} class="text-text-primary" />
     </button>
     
     <a href="/" class="flex items-center">
       <img 
-        src="/youtube-logo.png" 
+        src={"/youtube-logo.png"}
         alt="YouTube" 
-        class="h-5"
+        class="w-10"
       />
-      <span class="ml-1 text-xs align-top">IN</span>
+      <span class="ml-1 text-xs align-top text-text-primary">IN</span>
     </a>
   </div>
 
-  <!-- Search Form -->
+  <!-- Search Bar -->
   <form 
-    on:submit={handleSearch} 
-    class="flex-1 max-w-2xl mx-4 hidden md:flex"
+    class="flex-1 max-w-[720px] flex justify-center items-center hidden md:flex"
+    class:!flex={$isSearchExpanded}
+    onsubmit={handleSearch}
   >
-    <input
-      type="text"
-      placeholder="Search"
-      bind:value={searchQuery}
-      class="w-full px-4 py-2 bg-yt-black border border-yt-dark rounded-l-full focus:border-blue-500 outline-none"
-    />
-    <button 
-      type="submit"
-      class="px-6 py-2 bg-yt-dark border border-l-0 border-yt-dark rounded-r-full hover:bg-yt-secondary"
-    >
-      <Search size={20} />
-    </button>
-  </form>
-
-  <!-- Mobile Search -->
-  {#if $isSearchExpanded}
-    <form 
-      on:submit={handleSearch} 
-      class="flex-1 flex md:hidden items-center gap-2"
-    >
+    {#if $isSearchExpanded}
       <button 
         type="button"
-        class="p-2"
-        on:click={toggleSearch}
+        class="p-2 mr-2 hover:bg-hover-bg rounded-full md:hidden"
+        onclick={() => isSearchExpanded.set(false)}
       >
-        <X size={24} />
+        <X size={24} class="text-text-primary" />
       </button>
+    {/if}
+    
+    <div class="flex w-full max-w-[600px]">
       <input
         type="text"
         placeholder="Search"
         bind:value={searchQuery}
-        class="flex-1 px-4 py-2 bg-yt-black border border-yt-dark rounded-full focus:border-blue-500 outline-none"
+        class="w-full px-4 py-2 bg-bg-secondary text-text-primary border border-border-color rounded-l-full focus:border-blue-500 outline-none"
       />
-    </form>
-  {/if}
+      <button 
+        type="submit"
+        class="px-6 py-2 bg-hover-bg border border-l-0 border-border-color rounded-r-full hover:bg-bg-secondary"
+      >
+        <Search size={20} class="text-text-primary" />
+      </button>
+    </div>
+  </form>
 
+  <!-- Right Actions -->
   <div class="flex items-center gap-2" class:hidden={$isSearchExpanded}>
     <button 
-      class="p-2 hover:bg-yt-dark rounded-full md:hidden"
-      on:click={toggleSearch}
+      class="p-2 hover:bg-hover-bg rounded-full md:hidden"
+      onclick={toggleSearch}
     >
-      <Search size={24} />
+      <Search size={24} class="text-text-primary" />
     </button>
 
-    <button class="p-2 hover:bg-yt-dark rounded-full">
-      <Video size={24} />
-    </button>
-    
-    <button class="p-2 hover:bg-yt-dark rounded-full">
-      <Bell size={24} />
+    <button 
+      class="p-2 bg-bg-secondary hover:bg-hover-bg rounded-full"
+      onclick={toggleTheme}
+      aria-label="Toggle theme"
+    >
+      {#if $isDarkMode}
+        <Sun size={24} class="text-text-primary" />
+      {:else}
+        <Moon size={24} class="text-text-primary" />
+      {/if}
     </button>
 
-    <button class="w-8 h-8 rounded-full overflow-hidden">
+    <div class="hidden md:flex gap-2">
+      <button class="p-2 bg-bg-secondary hover:bg-hover-bg rounded-full">
+        <Video size={24} class="text-text-primary" />
+      </button>
+
+      <button class="p-2 bg-bg-secondary hover:bg-hover-bg rounded-full">
+        <Bell size={24} class="text-text-primary" />
+      </button>
+    </div>
+
+    <button class="w-8 h-8 rounded-full overflow-hidden bg-bg-secondary">
       <img 
         src="/default-avatar.png" 
         alt="Profile" 
