@@ -74,7 +74,7 @@
 <!-- Full Sidebar -->
 <aside
   class="fixed md:sticky top-14 left-0 z-30 h-[calc(100vh-3.5rem)] 
-         bg-bg-primary overflow-y-auto pb-4 transition-all duration-200
+         bg-bg-primary overflow-y-auto pb-4 transition-transform duration-200
          {open ? 'w-60' : 'w-0 md:w-[72px]'}"
   class:md:relative={isWatchPage}
 >

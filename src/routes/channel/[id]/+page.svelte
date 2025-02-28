@@ -7,6 +7,7 @@
   export let data;
   const { channel, videos } = data;
 
+
   const tabs = [
     'Home',
     'Videos',

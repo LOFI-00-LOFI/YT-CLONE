@@ -108,7 +108,7 @@
 
   <!-- Related Videos -->
   <div class="hidden lg:block w-[400px] flex-shrink-0">
-    <div class="sticky top-[88px]">
+    <div class="sticky top-[0px]">
       <RelatedVideos currentVideoId={video.id} />
     </div>
   </div>

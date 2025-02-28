@@ -107,7 +107,7 @@
       <!-- Show more button -->
       {#if !showAllComments && comments.length > 5}
         <button 
-          class="text-sm font-medium text-gray-400 hover:text-white py-2 px-4 rounded-full bg-yt-dark hover:bg-yt-secondary w-fit mx-auto"
+          class="text-sm font-medium  py-2 px-4 rounded-full bg-bg-secondary hover:bg-hover-bg w-fit mx-auto"
           onclick={() => showAllComments = true}
         >
           Show more comments

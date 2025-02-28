@@ -3,6 +3,7 @@
   import { fetchRelatedVideos, type YouTubeVideo } from '$lib/services/youtube';
   import { formatTimeAgo, formatNumber, formatDuration } from '$lib/utils/format';
   import { goto } from '$app/navigation';
+	import { EllipsisVertical } from 'lucide-svelte';
   
   export let currentVideoId: string | null;
   
@@ -69,8 +70,8 @@
 {:else}
   <div class="flex flex-col gap-3">
     {#each videos as video (video.id)}
-      <button 
-        class="flex gap-2 hover:bg-hover-bg p-2 rounded-xl transition-colors"
+      <div  role="presentation"
+        class="flex gap-2 hover:bg-hover-bg p-2 rounded-xl transition-colors cursor-pointer"
         on:click={() => handleVideoClick(video.id)}
       >
         <!-- Thumbnail -->
@@ -91,6 +92,7 @@
         <div class="flex flex-col flex-1 min-w-0">
           <h3 class="font-medium text-sm text-text-primary line-clamp-2 text-left">
             {video.snippet.title}
+            <EllipsisVertical size={16} />
           </h3>
           <p class="text-xs text-text-secondary mt-1">
             {video.snippet.channelTitle}
@@ -101,7 +103,7 @@
             <span>{formatTimeAgo(video.snippet.publishedAt)}</span>
           </div>
         </div>
-      </button>
+      </div>
     {/each}
   </div>
 {/if}

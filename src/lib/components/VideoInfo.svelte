@@ -40,7 +40,7 @@
         onclick={handleChannelClick}
       >
         <img
-          src={video.channelThumbnail || '/default-avatar.png'}
+          src={channelData?.snippet?.thumbnails?.default?.url || '/default-avatar.png'}
           alt={video.snippet.channelTitle}
           class="w-10 h-10 rounded-full"
         />
@@ -54,7 +54,7 @@
           {video.snippet.channelTitle}
         </button>
         <span class="text-sm text-text-secondary">
-          {formatNumber(video.statistics.subscriberCount || 0)} subscribers
+          {formatNumber(channelData?.statistics?.subscriberCount || 0)} subscribers
         </span>
       </div>
 
