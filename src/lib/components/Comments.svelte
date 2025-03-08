@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fetchVideoComments, fetchVideoCommentCount, type YouTubeComment } from '$lib/services/youtube';
+  import { fetchVideoComments, fetchVideoCommentCount, type YouTubeComment } from '$lib';
   import { ThumbsUp, ThumbsDown, MoreVertical } from 'lucide-svelte';
   import { formatTimeAgo, formatNumber } from '$lib/utils/format';
 
@@ -15,14 +15,19 @@
   onMount(async () => {
     try {
       loading = true;
-      const [commentsData, commentCount] = await Promise.all([
-        fetchVideoComments(videoId),
-        fetchVideoCommentCount(videoId)
+      error = null;
+      
+      // Load comment count and comments in parallel
+      const [countResult, commentsResult] = await Promise.all([
+        fetchVideoCommentCount(videoId, fetch),
+        fetchVideoComments(videoId, fetch)
       ]);
-      comments = commentsData.comments;
-      totalComments = commentCount;
+      
+      totalComments = String(countResult);
+      comments = commentsResult.comments;
     } catch (e) {
       error = 'Failed to load comments';
+      console.error('Error loading comments:', e);
     } finally {
       loading = false;
     }

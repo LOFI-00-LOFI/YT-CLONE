@@ -2,7 +2,7 @@
   import { page } from '$app/stores';
   import VideoCard from '$lib/components/VideoCard.svelte';
   import { formatNumber } from '$lib/utils/format';
-  import type { YouTubeVideo } from '$lib/services/youtube';
+  import type { YouTubeVideo } from '$lib';
 
   export let data;
   const { channel, videos } = data;
@@ -89,11 +89,13 @@
         <div class="flex-1 min-w-0">
           <h1 class="text-xl sm:text-2xl font-bold truncate">{channel.snippet.title}</h1>
           <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-gray-400 mt-1">
-            <span class="text-xs sm:text-sm">@{channel.snippet.customUrl || channel.id}</span>
+            <span class="text-xs sm:text-sm">@{channel.id}</span>
             <span class="hidden sm:inline">•</span>
             <span class="text-xs sm:text-sm">{formatNumber(channel.statistics.subscriberCount)} subscribers</span>
-            <span class="hidden sm:inline">•</span>
-            <span class="text-xs sm:text-sm">{formatNumber(channel.statistics.videoCount)} videos</span>
+            {#if channel.statistics.videoCount}
+              <span class="hidden sm:inline">•</span>
+              <span class="text-xs sm:text-sm">{formatNumber(channel.statistics.videoCount)} videos</span>
+            {/if}
           </div>
           <p class="text-xs sm:text-sm text-gray-400 mt-2 line-clamp-2 max-w-[600px]">
             {channel.snippet.description}

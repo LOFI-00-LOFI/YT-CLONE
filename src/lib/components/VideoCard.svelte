@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { YouTubeVideo } from '$lib/services/youtube';
+  import type { YouTubeVideo, YouTubeChannel } from '$lib';
   import { goto } from '$app/navigation';
-  import { fetchChannel } from '$lib/services/youtube';
+  import { fetchChannel } from '$lib';
   import { formatTimeAgo, formatNumber, formatDuration } from '$lib/utils/format';
   
   let { video, compact = false, thumbnailClass = '' } = $props<{
@@ -9,10 +9,10 @@
     compact?: boolean;
     thumbnailClass?: string;
   }>();
-  let channelData = $state(null);
+  let channelData: YouTubeChannel | null = $state(null);
 
   $effect(() => {
-    fetchChannel(video.snippet.channelId).then(data => {
+    fetchChannel(video.snippet.channelId, fetch).then(data => {
       channelData = data;
     });
   });

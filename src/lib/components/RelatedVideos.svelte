@@ -1,25 +1,42 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { fetchRelatedVideos, type YouTubeVideo } from '$lib/services/youtube';
-  import { formatTimeAgo, formatNumber, formatDuration } from '$lib/utils/format';
+  import { fetchRelatedVideos, type YouTubeVideo } from '$lib';
+  import { formatTimeAgo, formatNumber } from '$lib/utils/format';
   import { goto } from '$app/navigation';
-	import { EllipsisVertical } from 'lucide-svelte';
   
   export let currentVideoId: string | null;
   
   let videos: YouTubeVideo[] = [];
   let loading = true;
   let error: string | null = null;
+  let retryCount = 0;
+  const MAX_RETRIES = 2;
 
   async function loadRelatedVideos(videoId: string | null) {
     if (!videoId) return;
     try {
       loading = true;
       error = null;
-      const data = await fetchRelatedVideos(videoId);
+      console.log('Fetching related videos for:', videoId);
+      const data = await fetchRelatedVideos(videoId, fetch);
       videos = data.videos;
+      console.log('Related videos loaded:', videos.length);
+      
+      if (videos.length === 0) {
+        error = 'No related videos found';
+      }
     } catch (e) {
-      error = 'Failed to load related videos';
+      console.error('Error loading related videos:', e);
+      
+      if (retryCount < MAX_RETRIES) {
+        retryCount++;
+        console.log(`Retrying (${retryCount}/${MAX_RETRIES})...`);
+        setTimeout(() => {
+          loadRelatedVideos(videoId);
+        }, 1000); // Wait a second before retrying
+      } else {
+        error = 'Failed to load related videos';
+      }
     } finally {
       loading = false;
     }
@@ -29,7 +46,9 @@
     goto(`/watch?v=${videoId}`);
   }
 
+  // Reset retry count when video changes
   $: if (currentVideoId) {
+    retryCount = 0;
     loadRelatedVideos(currentVideoId);
   }
 
@@ -58,7 +77,10 @@
     {error}
     <button 
       class="mt-2 text-sm underline"
-      on:click={() => loadRelatedVideos(currentVideoId)}
+      on:click={() => {
+        retryCount = 0;
+        loadRelatedVideos(currentVideoId);
+      }}
     >
       Try again
     </button>
@@ -70,7 +92,8 @@
 {:else}
   <div class="flex flex-col gap-3">
     {#each videos as video (video.id)}
-      <div  role="presentation"
+      <div  
+        role="presentation"
         class="flex gap-2 hover:bg-hover-bg p-2 rounded-xl transition-colors cursor-pointer"
         on:click={() => handleVideoClick(video.id)}
       >
@@ -83,7 +106,7 @@
           />
           {#if video.contentDetails?.duration}
             <div class="absolute bottom-1 right-1 bg-black/80 px-1 rounded text-xs text-white">
-              {formatDuration(video.contentDetails.duration)}
+              {video.contentDetails.duration}
             </div>
           {/if}
         </div>
@@ -92,7 +115,6 @@
         <div class="flex flex-col flex-1 min-w-0">
           <h3 class="font-medium text-sm text-text-primary line-clamp-2 text-left">
             {video.snippet.title}
-            <EllipsisVertical size={16} />
           </h3>
           <p class="text-xs text-text-secondary mt-1">
             {video.snippet.channelTitle}

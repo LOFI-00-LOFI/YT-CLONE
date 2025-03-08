@@ -102,9 +102,10 @@
     </button>
 
     <button 
-      class="p-2 bg-bg-secondary hover:bg-hover-bg rounded-full"
+      class="p-2 bg-bg-secondary hover:bg-hover-bg rounded-full flex items-center gap-2"
       onclick={toggleTheme}
-      aria-label="Toggle theme"
+      aria-label={$isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={$isDarkMode ? 'Light mode' : 'Dark mode'}
     >
       {#if $isDarkMode}
         <Sun size={24} class="text-text-primary" />

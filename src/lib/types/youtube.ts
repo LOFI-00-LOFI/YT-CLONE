@@ -24,6 +24,7 @@ export interface YouTubeVideo {
     channelTitle: string;
     channelId: string;
     publishedAt: string;
+    categoryId?: string;
   };
   contentDetails?: {
     duration: string;
@@ -31,5 +32,60 @@ export interface YouTubeVideo {
   statistics: {
     viewCount: string;
     likeCount: string;
+    commentCount?: string;
+  };
+}
+
+export interface YouTubeComment {
+  id: string;
+  snippet: {
+    topLevelComment: {
+      snippet: {
+        authorDisplayName: string;
+        authorProfileImageUrl: string;
+        textDisplay: string;
+        likeCount: number;
+        publishedAt: string;
+      }
+    };
+    totalReplyCount: number;
+  };
+}
+
+export interface YouTubeChannelThumbnail {
+  url: string;
+  width: number;
+  height: number;
+}
+
+export interface YouTubeChannel {
+  id: string;
+  snippet: {
+    title: string;
+    description?: string;
+    thumbnails: {
+      default: YouTubeChannelThumbnail;
+      medium: YouTubeChannelThumbnail;
+      high: YouTubeChannelThumbnail;
+    };
+  };
+  statistics: {
+    subscriberCount: string;
+    videoCount?: string;
+    viewCount?: string;
+  };
+  brandingSettings?: {
+    image?: {
+      bannerExternalUrl?: string;
+    }
+  };
+}
+
+export interface APIResponse<T> {
+  items: T[];
+  nextPageToken?: string;
+  pageInfo?: {
+    totalResults: number;
+    resultsPerPage: number;
   };
 } 

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
-  import { searchVideos, fetchChannel, type YouTubeVideo } from '$lib/services/youtube';
+  import { searchVideos, fetchChannel, type YouTubeVideo } from '$lib';
   import VideoCard from '$lib/components/VideoCard.svelte';
   import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
   import { fade } from 'svelte/transition';
@@ -36,7 +36,7 @@
       state.loading = true;
       state.error = null;
       
-      const data = await searchVideos(state.searchQuery, state.nextPageToken);
+      const data = await searchVideos(state.searchQuery, fetch, state.nextPageToken);
       
       if (!data?.videos?.length) {
         state.hasMore = false;
@@ -54,7 +54,7 @@
         uniqueChannelIds.map(async (channelId: string) => {
           if (!state.channelDataMap[channelId]) {
             try {
-              const channelData = await fetchChannel(channelId);
+              const channelData = await fetchChannel(channelId, fetch);
               state.channelDataMap[channelId] = channelData;
             } catch (e) {
               console.error('Error fetching channel:', e);

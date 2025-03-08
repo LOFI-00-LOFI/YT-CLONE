@@ -4,29 +4,29 @@
   import { sidebarOpen } from '$lib/stores/ui';
   import { currentCategory } from '$lib/stores/category';
   import InfiniteScroll from '$lib/components/InfiniteScroll.svelte';
-  import { fetchVideos, type YouTubeVideo } from '$lib/services/youtube';
+  import { fetchVideos, type YouTubeVideo } from '$lib';
   import VideoCard from '$lib/components/VideoCard.svelte';
   import { fade } from 'svelte/transition';
 
   let videos: YouTubeVideo[] = [];
   let loading = true;
   let error: string | null = null;
-  let nextPageToken: string | null = null;
+  let nextPageToken: string | undefined = undefined;
   let hasMore = true;
 
   async function loadVideos(pageToken?: string) {
     try {
       loading = true;
       error = null;
-      const data = await fetchVideos({ 
+      const data = await fetchVideos(fetch, { 
         pageToken, 
         category: $currentCategory 
       });
       
       if (pageToken) {
-        videos = [...videos, ...data.items];
+        videos = [...videos, ...data.videos];
       } else {
-        videos = data.items;
+        videos = data.videos;
       }
       nextPageToken = data.nextPageToken;
       hasMore = !!data.nextPageToken;
@@ -49,7 +49,7 @@
   // Watch category changes to reset and reload
   $: if ($currentCategory) {
     videos = [];
-    nextPageToken = null;
+    nextPageToken = undefined;
     hasMore = true;
     loading = true;
     loadVideos();

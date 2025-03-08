@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { YouTubeVideo } from '$lib/services/youtube';
+  import type { YouTubeVideo } from '$lib';
   
   export let video: YouTubeVideo;
   export let autoplay = true;

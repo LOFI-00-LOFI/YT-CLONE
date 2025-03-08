@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { 
-    fetchVideos,
-    type YouTubeVideo 
-  } from '$lib/services/youtube';
-  import VideoCard from './VideoCard.svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { currentCategory } from '$lib/stores/category';
+  import { 
+    fetchVideos, type YouTubeVideo 
+  } from '$lib';
+  import VideoCard from './VideoCard.svelte';
+
+  export let sidebarOpen = false;
 
   let videos: YouTubeVideo[] = [];
   let loading = true;
@@ -15,9 +16,11 @@
     try {
       loading = true;
       error = null;
-      const data = await fetchVideos(category);
+      const data = await fetchVideos(fetch, { category });
       videos = data.videos;
     } catch (e) {
+      error = 'Failed to load videos';
+      console.error('Error loading videos:', e);
     } finally {
       loading = false;
     }

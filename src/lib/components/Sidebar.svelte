@@ -41,23 +41,23 @@
   const secondaryLinks = [
     { icon: Library, label: "Library", category: "library" },
     { icon: History, label: "History", category: "history" },
-    { icon: Video, label: "Your videos", category: "your-videos" },
-    { icon: Clock, label: "Watch later", category: "watch-later" },
+    // { icon: Video, label: "Your videos", category: "your-videos" },
+    // { icon: Clock, label: "Watch later", category: "watch-later" },
     { icon: ThumbsUp, label: "Liked videos", category: "liked-videos" }
   ];
 
   const exploreLinks = [
-    { icon: TrendingUp, label: "Trending", category: "trending" },
+    // { icon: TrendingUp, label: "Trending", category: "trending" },
     { icon: ShoppingBag, label: "Shopping", category: "shopping" },
     { icon: Music, label: "Music", category: "music" },
     { icon: Clapperboard, label: "Movies", category: "movies" },
     { icon: Radio, label: "Live", category: "live" },
     { icon: Gamepad2, label: "Gaming", category: "gaming" },
     { icon: Newspaper, label: "News", category: "news" },
-    { icon: Trophy, label: "Sports", category: "sports" },
-    { icon: GraduationCap, label: "Learning", category: "learning" },
-    { icon: Shirt, label: "Fashion & Beauty", category: "fashion" },
-    { icon: Podcast, label: "Podcasts", category: "podcasts" }
+    // { icon: Trophy, label: "Sports", category: "sports" },
+    // { icon: GraduationCap, label: "Learning", category: "learning" },
+    // { icon: Shirt, label: "Fashion & Beauty", category: "fashion" },
+    // { icon: Podcast, label: "Podcasts", category: "podcasts" }
   ];
 
   function handleClick(category: string) {
@@ -84,10 +84,11 @@
     <div class="{open ? 'border-b border-border-color pb-3' : ''}">
       {#each mainLinks as link}
         <button
-          class="w-full flex items-center gap-6 px-3 py-2 hover:bg-hover-bg rounded-lg"
+          class="w-full flex items-center  gap-6 px-3 py-2 my-2 hover:bg-hover-bg rounded-lg"
           class:justify-center={!open}
           class:bg-hover-bg={isHomePage && link.category === 'home'}
           onclick={() => handleClick(link.category)}
+          title={!open ? link.label : ''}
         >
           <svelte:component this={link.icon} size={24} class="text-text-primary" />
           {#if open}
@@ -97,38 +98,44 @@
       {/each}
     </div>
 
-    <!-- Secondary Links -->
-    {#if open}
-      <div class="border-b border-border-color py-3">
-        {#each secondaryLinks as link}
-          <button
-            class="w-full flex items-center gap-6 px-3 py-2 hover:bg-hover-bg rounded-lg"
-            class:bg-hover-bg={$currentCategory === link.category}
-            onclick={() => handleClick(link.category)}
-          >
-            <svelte:component this={link.icon} size={24} class="text-text-primary" />
+    <!-- Secondary Links - Show in both modes -->
+    <div class="{open ? 'border-b border-border-color py-3' : 'py-3'}">
+      {#each secondaryLinks as link}
+        <button
+          class="w-full flex items-center gap-6 px-3 py-2 my-2 hover:bg-hover-bg rounded-lg"
+          class:justify-center={!open}
+          class:bg-hover-bg={$currentCategory === link.category}
+          onclick={() => handleClick(link.category)}
+          title={!open ? link.label : ''}
+        >
+          <svelte:component this={link.icon} size={24} class="text-text-primary" />
+          {#if open}
             <span class="text-text-primary">{link.label}</span>
-          </button>
-        {/each}
-      </div>
-    {/if}
+          {/if}
+        </button>
+      {/each}
+    </div>
 
-    <!-- Explore -->
-    {#if open}
-      <div class="pt-3">
+    <!-- Explore - Show in both modes -->
+    <div class="pt-3">
+      {#if open}
         <h3 class="px-3 mb-1 text-lg text-text-primary">Explore</h3>
-        {#each exploreLinks as link}
-          <button
-            class="w-full flex items-center gap-6 px-3 py-2 hover:bg-hover-bg rounded-lg"
-            class:bg-hover-bg={$currentCategory === link.category}
-            onclick={() => handleClick(link.category)}
-          >
-            <svelte:component this={link.icon} size={24} class="text-text-primary" />
+      {/if}
+      {#each exploreLinks as link}
+        <button
+          class="w-full flex items-center gap-6 px-3 py-2 my-2 hover:bg-hover-bg rounded-lg"
+          class:justify-center={!open}
+          class:bg-hover-bg={$currentCategory === link.category}
+          onclick={() => handleClick(link.category)}
+          title={!open ? link.label : ''}
+        >
+          <svelte:component this={link.icon} size={24} class="text-text-primary" />
+          {#if open}
             <span class="text-text-primary">{link.label}</span>
-          </button>
-        {/each}
-      </div>
-    {/if}
+          {/if}
+        </button>
+      {/each}
+    </div>
   </div>
 </aside>
 
