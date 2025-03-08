@@ -80,7 +80,7 @@
               <span class="font-medium">
                 {comment.snippet.topLevelComment.snippet.authorDisplayName}
               </span>
-              <span class="text-sm text-gray-400">
+              <span class="text-sm ">
                 {formatTimeAgo(comment.snippet.topLevelComment.snippet.publishedAt)}
               </span>
             </div>
@@ -88,22 +88,22 @@
               {comment.snippet.topLevelComment.snippet.textDisplay}
             </p>
             <div class="flex items-center gap-4 mt-2">
-              <button class="flex items-center gap-2 text-sm text-gray-400 hover:text-white">
+              <button class="flex items-center gap-2 text-sm ">
                 <ThumbsUp size={16} />
                 <span>{formatNumber(comment.snippet.topLevelComment.snippet.likeCount)}</span>
               </button>
-              <button class="text-gray-400 hover:text-white">
+              <button>
                 <ThumbsDown size={16} />
               </button>
-              <button class="text-sm text-gray-400 hover:text-white">Reply</button>
+              <button>Reply</button>
             </div>
             {#if comment.snippet.totalReplyCount > 0}
-              <button class="text-sm text-blue-400 hover:text-blue-300 mt-2">
+              <button class="text-sm text-blue-400 mt-2">
                 {comment.snippet.totalReplyCount} replies
               </button>
             {/if}
           </div>
-          <button class="text-gray-400 hover:text-white p-2">
+          <button class="p-2">
             <MoreVertical size={16} />
           </button>
         </div>
