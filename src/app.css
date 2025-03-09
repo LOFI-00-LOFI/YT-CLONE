@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light theme colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f2f2f2;
+  --text-primary: #0f0f0f;
+  --text-secondary: #606060;
+  --hover-bg: #e5e5e5;
+  --border-color: #e5e5e5;
+  --video-hover: #f2f2f2;
+  --sidebar-bg: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  /* Dark theme colors */
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #272727;
+  --text-primary: #ffffff;
+  --text-secondary: #aaaaaa;
+  --hover-bg: #383838;
+  --border-color: #303030;
+  --video-hover: #272727;
+  --sidebar-bg: #0f0f0f;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Modern scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-secondary);
+  border-radius: 4px;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-secondary) var(--bg-primary);
+}
+
+/* Hide scrollbar but keep functionality for specific elements */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
