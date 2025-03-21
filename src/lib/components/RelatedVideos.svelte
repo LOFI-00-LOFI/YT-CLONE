@@ -1,59 +1,48 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { fetchRelatedVideos, type YouTubeVideo } from '$lib';
 	import { formatTimeAgo, formatNumber } from '$lib/utils/format';
 	import { goto } from '$app/navigation';
 
-	export let currentVideoId: string | null;
+	let { currentVideoId } = $props<{
+		currentVideoId: string | null;
+	}>();
 
-	let videos: YouTubeVideo[] = [];
-	let loading = true;
-	let error: string | null = null;
-	let retryCount = 0;
+	let videos = $state<YouTubeVideo[]>([]);
+	let loading = $state(true);
+	let error = $state<string | null>(null);
+	let retryCount = $state(0);
 	const MAX_RETRIES = 2;
+	
+	// Use a regular variable instead of a reactive state to track the last loaded video
+	// This prevents reactivity loops
+	let lastLoadedVideoId: string | null = null;
 
 	async function loadRelatedVideos(videoId: string | null) {
-		if (!videoId) return;
-		try {
-			loading = true;
-			error = null;
-			console.log('Fetching related videos for:', videoId);
-			const data = await fetchRelatedVideos(videoId, fetch);
-			videos = data.videos;
-			console.log('Related videos loaded:', videos.length);
+		if (!videoId || videoId === lastLoadedVideoId) return;
+		
+		loading = true;
+		error = null;
+		
+		const data = await fetchRelatedVideos(videoId, fetch);
+		videos = data.videos;
+		// Update non-reactive variable
+		lastLoadedVideoId = videoId;
 
-			if (videos.length === 0) {
-				error = 'No related videos found';
-			}
-		} catch (e) {
-			console.error('Error loading related videos:', e);
-
-			if (retryCount < MAX_RETRIES) {
-				retryCount++;
-				console.log(`Retrying (${retryCount}/${MAX_RETRIES})...`);
-				setTimeout(() => {
-					loadRelatedVideos(videoId);
-				}, 1000); // Wait a second before retrying
-			} else {
-				error = 'Failed to load related videos';
-			}
-		} finally {
-			loading = false;
+		if (videos.length === 0) {
+			error = 'No related videos found';
 		}
+		
+		loading = false;
 	}
 
 	function handleVideoClick(videoId: string) {
 		goto(`/watch?v=${videoId}`);
 	}
 
-	// Reset retry count when video changes
-	$: if (currentVideoId) {
-		retryCount = 0;
-		loadRelatedVideos(currentVideoId);
-	}
-
-	onMount(() => {
-		if (currentVideoId) {
+	// Load videos when currentVideoId changes
+	$effect(() => {
+		if (currentVideoId && currentVideoId !== lastLoadedVideoId) {
+			retryCount = 0;
 			loadRelatedVideos(currentVideoId);
 		}
 	});

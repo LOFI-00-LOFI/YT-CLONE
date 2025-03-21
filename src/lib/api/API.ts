@@ -1,46 +1,21 @@
 // src/lib/api/API.ts
+// Main API module for YouTube data fetching operations
 
 import { youtubeFetch } from './ApiWrapper';
 import type { YouTubeVideo, YouTubeComment, YouTubeChannel, APIResponse } from '$lib/types/youtube';
+import { formatDuration } from '$lib/utils/format';
+import { getCategoryId } from '$lib/utils/category';
 
-// Utility Functions
-function formatDuration(duration: string): string {
-  if (!duration) return '';
-  
-  const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-  if (!match) return '';
-  
-  const hours = match[1]?.replace('H', '') || '';
-  const minutes = match[2]?.replace('M', '') || '';
-  const seconds = match[3]?.replace('S', '') || '';
+/**
+ * Core video fetching functions
+ */
 
-  let result = '';
-  
-  if (hours) {
-    result += `${hours}:`;
-    result += `${minutes.padStart(2, '0')}:` || '00:';
-  } else {
-    result += `${minutes || '0'}:`;
-  }
-  
-  result += `${seconds.padStart(2, '0')}` || '00';
-  
-  return result;
-}
-
-function getCategoryId(category: string): string {
-  switch (category.toLowerCase()) {
-    case 'music': return '10';
-    case 'gaming': return '20';
-    case 'news': return '25';
-    case 'sports': return '17';
-    case 'learning': return '27';
-    case 'fashion': return '26';
-    default: return '';
-  }
-}
-
-// Video Functions
+/**
+ * Fetches the most popular videos from YouTube
+ * @param fetchFn - Fetch function to use for API requests
+ * @param pageToken - Optional token for pagination
+ * @returns Object containing videos array and next page token
+ */
 export const fetchPopularVideos = async (
   fetchFn: typeof fetch = fetch,
   pageToken?: string
@@ -70,6 +45,12 @@ export const fetchPopularVideos = async (
   };
 };
 
+/**
+ * Fetches videos based on category and pagination
+ * @param fetchFn - Fetch function to use for API requests
+ * @param options - Object containing optional parameters (pageToken, maxResults, category)
+ * @returns Object containing videos array and next page token
+ */
 export const fetchVideos = async (
   fetchFn: typeof fetch = fetch,
   options: { pageToken?: string; maxResults?: number; category?: string } = {}
@@ -81,7 +62,29 @@ export const fetchVideos = async (
   }
   
   if (category === 'trending') {
-    return fetchTrendingVideos(fetchFn);
+    const params: Record<string, any> = {
+      part: 'snippet,statistics,contentDetails',
+      chart: 'mostPopular',
+      regionCode: 'IN',
+      maxResults
+    };
+    
+    if (pageToken) {
+      params.pageToken = pageToken;
+    }
+    
+    const data = await youtubeFetch<APIResponse<YouTubeVideo>>(
+      'videos', 
+      params, 
+      fetchFn
+    );
+    
+    if (!data) return { videos: [] };
+    
+    return {
+      videos: data.items || [],
+      nextPageToken: data.nextPageToken
+    };
   }
   
   const categoryId = getCategoryId(category);
@@ -108,12 +111,28 @@ export const fetchVideos = async (
 
   if (!data) return { videos: [] };
 
+  // Format durations for all videos
+  if (data.items) {
+    data.items.forEach(video => {
+      if (video.contentDetails?.duration) {
+        video.contentDetails.duration = formatDuration(video.contentDetails.duration);
+      }
+    });
+  }
+
   return {
     videos: data.items || [],
     nextPageToken: data.nextPageToken
   };
 };
 
+/**
+ * Searches YouTube videos by query string
+ * @param query - Search query text
+ * @param fetchFn - Fetch function to use for API requests
+ * @param pageToken - Optional token for pagination
+ * @returns Object containing videos array and next page token
+ */
 export const searchVideos = async (
   query: string,
   fetchFn: typeof fetch = fetch,
@@ -167,10 +186,20 @@ export const searchVideos = async (
   };
 };
 
+/**
+ * Fetches detailed information for a specific video
+ * @param videoId - YouTube video ID
+ * @param fetchFn - Fetch function to use for API requests
+ * @returns Video object or null if not found
+ */
 export const fetchVideoDetails = async (
   videoId: string,
   fetchFn: typeof fetch = fetch
 ): Promise<YouTubeVideo | null> => {
+  if (!videoId) {
+    return null;
+  }
+  
   const params = {
     part: 'snippet,statistics,contentDetails',
     id: videoId
@@ -182,174 +211,154 @@ export const fetchVideoDetails = async (
     fetchFn
   );
   
-  if (data?.items?.length) {
-    const video = data.items[0];
-    
-    // Format duration if available
-    if (video.contentDetails?.duration) {
-      video.contentDetails.duration = formatDuration(video.contentDetails.duration);
-    }
-    
-    return video;
+  if (!data || !data.items || !data.items.length) {
+    return null;
   }
   
-  return null;
+  const video = data.items[0];
+  
+  // Format duration if available
+  if (video.contentDetails?.duration) {
+    video.contentDetails.duration = formatDuration(video.contentDetails.duration);
+  }
+  
+  return video;
 };
 
+/**
+ * Fetches videos related to a specific video
+ * @param videoId - YouTube video ID to find related content for
+ * @param fetchFn - Fetch function to use for API requests
+ * @returns Object containing videos array and next page token
+ */
 export const fetchRelatedVideos = async (
   videoId: string,
   fetchFn: typeof fetch = fetch
 ): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  try {
-    // First get search results for related videos
-    const searchParams = {
-      part: 'snippet',
-      type: 'video',
-      relatedToVideoId: videoId,
-      maxResults: 15
-      // Remove any other parameters that might cause conflicts
-    };
+  // First get search results for related videos
+  const searchParams = {
+    part: 'snippet',
+    type: 'video',
+    relatedToVideoId: videoId,
+    maxResults: 15
+  };
 
-    const searchData = await youtubeFetch<APIResponse<{ id: { videoId: string } }>>(
-      'search', 
-      searchParams, 
-      fetchFn
-    );
+  const searchData = await youtubeFetch<APIResponse<{ id: { videoId: string } }>>(
+    'search', 
+    searchParams, 
+    fetchFn
+  );
 
-    if (!searchData?.items?.length) {
-      console.log("No related videos found in search results");
-      return await getFallbackVideos(videoId, fetchFn);
-    }
-
-    // Then get full video details
-    const videoIds = searchData.items
-      .map(item => item.id.videoId)
-      .filter(Boolean)
-      .join(',');
-
-    if (!videoIds) {
-      console.log("No valid video IDs found after filtering");
-      return await getFallbackVideos(videoId, fetchFn);
-    }
-
-    const videoParams = {
-      part: 'snippet,statistics,contentDetails',
-      id: videoIds
-    };
-
-    const videoData = await youtubeFetch<APIResponse<YouTubeVideo>>(
-      'videos', 
-      videoParams, 
-      fetchFn
-    );
-
-    if (!videoData) {
-      console.log("No video data returned from videos endpoint");
-      return await getFallbackVideos(videoId, fetchFn);
-    }
-
-    // Filter out the current video from results
-    const filteredVideos = (videoData.items || []).filter(
-      item => item.id !== videoId
-    );
-
-    // Format video durations
-    filteredVideos.forEach(video => {
-      if (video.contentDetails?.duration) {
-        video.contentDetails.duration = formatDuration(video.contentDetails.duration);
-      }
-    });
-
-    console.log(`Successfully loaded ${filteredVideos.length} related videos`);
-    
-    if (filteredVideos.length === 0) {
-      return await getFallbackVideos(videoId, fetchFn);
-    }
-    
-    return {
-      videos: filteredVideos,
-      nextPageToken: searchData.nextPageToken
-    };
-  } catch (error) {
-    console.error('Error in fetchRelatedVideos:', error);
+  if (!searchData?.items?.length) {
     return await getFallbackVideos(videoId, fetchFn);
   }
-};
 
-// Fallback function to get videos if relatedToVideoId doesn't work
-async function getFallbackVideos(videoId: string, fetchFn: typeof fetch): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> {
-  console.log("Using fallback method to find similar videos");
-  
-  try {
-    // First fallback: Try to get videos from the same channel
-    console.log("Fallback 1: Fetching videos from the same channel");
-    const videoDetails = await fetchVideoDetails(videoId, fetchFn);
-      
-    if (videoDetails && videoDetails.snippet.channelId) {
-      const channelVideos = await fetchChannelVideos(videoDetails.snippet.channelId, fetchFn);
-      
-      // Filter out the current video
-      const filteredChannelVideos = channelVideos.videos.filter(
-        video => video.id !== videoId
-      ).slice(0, 15); // Limit to 15 videos
-      
-      if (filteredChannelVideos.length > 0) {
-        console.log(`Found ${filteredChannelVideos.length} videos from the same channel`);
-        return {
-          videos: filteredChannelVideos,
-          nextPageToken: channelVideos.nextPageToken
-        };
-      }
-    }
-    
-    // Second fallback: Get popular videos in the same category
-    if (videoDetails && videoDetails.snippet.categoryId) {
-      console.log("Fallback 2: Fetching popular videos in the same category");
-      const categoryVideos = await youtubeFetch<APIResponse<YouTubeVideo>>(
-        'videos', 
-        {
-          part: 'snippet,statistics,contentDetails',
-          chart: 'mostPopular',
-          videoCategoryId: videoDetails.snippet.categoryId,
-          maxResults: 15,
-          regionCode: 'US'
-        }, 
-        fetchFn
-      );
-      
-      if (categoryVideos && categoryVideos.items) {
-        // Filter out the current video
-        const filteredCategoryVideos = categoryVideos.items.filter(
-          video => video.id !== videoId
-        );
-        
-        // Format durations
-        filteredCategoryVideos.forEach(video => {
-          if (video.contentDetails?.duration) {
-            video.contentDetails.duration = formatDuration(video.contentDetails.duration);
-          }
-        });
-        
-        console.log(`Found ${filteredCategoryVideos.length} videos from the same category`);
-        return {
-          videos: filteredCategoryVideos,
-          nextPageToken: categoryVideos.nextPageToken
-        };
-      }
-    }
-    
-    // Third fallback: Just return trending videos
-    console.log("Fallback 3: Fetching trending videos");
-    const trendingVideos = await fetchTrendingVideos(fetchFn);
-    return trendingVideos;
-    
-  } catch (fallbackError) {
-    console.error('All fallbacks failed:', fallbackError);
+  // Then get full video details
+  const videoIds = searchData.items
+    .map(item => item.id.videoId)
+    .filter(Boolean)
+    .join(',');
+
+  if (!videoIds) {
+    return await getFallbackVideos(videoId, fetchFn);
+  }
+
+  const videoParams = {
+    part: 'snippet,statistics,contentDetails',
+    id: videoIds
+  };
+
+  const videoData = await youtubeFetch<APIResponse<YouTubeVideo>>(
+    'videos', 
+    videoParams, 
+    fetchFn
+  );
+
+  if (!videoData) {
     return { videos: [] };
   }
+
+  return {
+    videos: videoData.items || [],
+    nextPageToken: searchData.nextPageToken
+  };
+};
+
+/**
+ * Fallback function for when related videos cannot be found
+ * Uses multiple strategies to find relevant content
+ * @param videoId - YouTube video ID
+ * @param fetchFn - Fetch function to use for API requests
+ * @returns Object containing videos array and next page token
+ */
+async function getFallbackVideos(videoId: string, fetchFn: typeof fetch): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> {
+  // First fallback: Try to get videos from the same channel
+  const videoDetails = await fetchVideoDetails(videoId, fetchFn);
+    
+  if (videoDetails && videoDetails.snippet.channelId) {
+    const channelVideos = await fetchChannelVideos(videoDetails.snippet.channelId, fetchFn);
+    
+    // Filter out the current video
+    const filteredChannelVideos = channelVideos.videos.filter(
+      video => video.id !== videoId
+    ).slice(0, 15); // Limit to 15 videos
+    
+    if (filteredChannelVideos.length > 0) {
+      return {
+        videos: filteredChannelVideos,
+        nextPageToken: channelVideos.nextPageToken
+      };
+    }
+  }
+  
+  // Second fallback: Get popular videos in the same category
+  if (videoDetails && videoDetails.snippet.categoryId) {
+    const categoryVideos = await youtubeFetch<APIResponse<YouTubeVideo>>(
+      'videos', 
+      {
+        part: 'snippet,statistics,contentDetails',
+        chart: 'mostPopular',
+        videoCategoryId: videoDetails.snippet.categoryId,
+        maxResults: 15,
+        regionCode: 'US'
+      }, 
+      fetchFn
+    );
+    
+    if (categoryVideos && categoryVideos.items) {
+      // Filter out the current video
+      const filteredCategoryVideos = categoryVideos.items.filter(
+        video => video.id !== videoId
+      );
+      
+      // Format durations
+      filteredCategoryVideos.forEach(video => {
+        if (video.contentDetails?.duration) {
+          video.contentDetails.duration = formatDuration(video.contentDetails.duration);
+        }
+      });
+      
+      return {
+        videos: filteredCategoryVideos,
+        nextPageToken: categoryVideos.nextPageToken
+      };
+    }
+  }
+  
+  // Third fallback: Just return trending videos
+  return await fetchCategoryVideos('trending', fetchFn);
 }
 
-// Comment Functions
+/**
+ * Comments and channel-related functions
+ */
+
+/**
+ * Fetches comments for a specific video
+ * @param videoId - YouTube video ID
+ * @param fetchFn - Fetch function to use for API requests
+ * @returns Object containing comments array and total count
+ */
 export const fetchVideoComments = async (
   videoId: string,
   fetchFn: typeof fetch = fetch
@@ -375,6 +384,12 @@ export const fetchVideoComments = async (
   };
 };
 
+/**
+ * Fetches the comment count for a specific video
+ * @param videoId - YouTube video ID
+ * @param fetchFn - Fetch function to use for API requests
+ * @returns Comment count as a number
+ */
 export const fetchVideoCommentCount = async (
   videoId: string,
   fetchFn: typeof fetch = fetch
@@ -395,7 +410,12 @@ export const fetchVideoCommentCount = async (
     : 0;
 };
 
-// Channel Functions
+/**
+ * Fetches channel information
+ * @param channelId - YouTube channel ID
+ * @param fetchFn - Fetch function to use for API requests
+ * @returns Channel object or null if not found
+ */
 export const fetchChannel = async (
   channelId: string,
   fetchFn: typeof fetch = fetch
@@ -414,6 +434,12 @@ export const fetchChannel = async (
   return data?.items?.[0] || null;
 };
 
+/**
+ * Fetches videos from a specific channel
+ * @param channelId - YouTube channel ID
+ * @param fetchFn - Fetch function to use for API requests
+ * @returns Object containing videos array and next page token
+ */
 export const fetchChannelVideos = async (
   channelId: string,
   fetchFn: typeof fetch = fetch
@@ -491,225 +517,17 @@ export const fetchChannelVideos = async (
   };
 };
 
-// Category-specific Functions
-export const fetchTrendingVideos = async (
-  fetchFn: typeof fetch = fetch
+/**
+ * Fetches videos by category
+ * @param category - Category identifier string
+ * @param fetchFn - Fetch function to use for API requests
+ * @param pageToken - Optional token for pagination
+ * @returns Object containing videos array and next page token
+ */
+export const fetchCategoryVideos = async (
+  category: string,
+  fetchFn: typeof fetch = fetch,
+  pageToken?: string
 ): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  return fetchVideos(fetchFn, { category: 'trending' });
-};
-
-export const fetchMusicVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  return fetchVideos(fetchFn, { category: 'music' });
-};
-
-export const fetchGamingVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  return fetchVideos(fetchFn, { category: 'gaming' });
-};
-
-export const fetchNewsVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  return fetchVideos(fetchFn, { category: 'news' });
-};
-
-export const fetchSportsVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  return fetchVideos(fetchFn, { category: 'sports' });
-};
-
-export const fetchLearningVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  return fetchVideos(fetchFn, { category: 'learning' });
-};
-
-export const fetchFashionVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  return fetchVideos(fetchFn, { category: 'fashion' });
-};
-
-// Specialized Content Functions
-export const fetchPodcastVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  const params = {
-    part: 'snippet',
-    q: 'podcast OR talk show',
-    type: 'video',
-    videoDuration: 'long',
-    maxResults: 15
-  };
-
-  const searchData = await youtubeFetch<APIResponse<{ id: { videoId: string } }>>(
-    'search', 
-    params, 
-    fetchFn
-  );
-
-  if (!searchData?.items?.length) {
-    return { videos: [] };
-  }
-
-  const videoIds = searchData.items.map(item => item.id.videoId).join(',');
-  
-  const videoData = await youtubeFetch<APIResponse<YouTubeVideo>>(
-    'videos', 
-    {
-      part: 'snippet,statistics,contentDetails',
-      id: videoIds
-    }, 
-    fetchFn
-  );
-
-  if (!videoData) return { videos: [] };
-
-  // Format video durations
-  videoData.items.forEach(video => {
-    if (video.contentDetails?.duration) {
-      video.contentDetails.duration = formatDuration(video.contentDetails.duration);
-    }
-  });
-
-  return {
-    videos: videoData.items || [],
-    nextPageToken: searchData.nextPageToken
-  };
-};
-
-export const fetchMovieTrailers = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  const params = {
-    part: 'snippet',
-    q: 'official movie trailer',
-    type: 'video',
-    videoDuration: 'short',
-    maxResults: 15
-  };
-
-  const searchData = await youtubeFetch<APIResponse<{ id: { videoId: string } }>>(
-    'search', 
-    params, 
-    fetchFn
-  );
-
-  if (!searchData?.items?.length) {
-    return { videos: [] };
-  }
-
-  const videoIds = searchData.items.map(item => item.id.videoId).join(',');
-  
-  const videoData = await youtubeFetch<APIResponse<YouTubeVideo>>(
-    'videos', 
-    {
-      part: 'snippet,statistics,contentDetails',
-      id: videoIds
-    }, 
-    fetchFn
-  );
-
-  if (!videoData) return { videos: [] };
-
-  // Format video durations
-  videoData.items.forEach(video => {
-    if (video.contentDetails?.duration) {
-      video.contentDetails.duration = formatDuration(video.contentDetails.duration);
-    }
-  });
-
-  return {
-    videos: videoData.items || [],
-    nextPageToken: searchData.nextPageToken
-  };
-};
-
-export const fetchLiveStreams = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  const params = {
-    part: 'snippet',
-    eventType: 'live',
-    type: 'video',
-    maxResults: 15
-  };
-
-  const searchData = await youtubeFetch<APIResponse<{ id: { videoId: string } }>>(
-    'search', 
-    params, 
-    fetchFn
-  );
-
-  if (!searchData?.items?.length) {
-    return { videos: [] };
-  }
-
-  const videoIds = searchData.items.map(item => item.id.videoId).join(',');
-  
-  const videoData = await youtubeFetch<APIResponse<YouTubeVideo>>(
-    'videos', 
-    {
-      part: 'snippet,statistics,contentDetails',
-      id: videoIds
-    }, 
-    fetchFn
-  );
-
-  if (!videoData) return { videos: [] };
-
-  return {
-    videos: videoData.items || [],
-    nextPageToken: searchData.nextPageToken
-  };
-};
-
-export const fetchShoppingVideos = async (
-  fetchFn: typeof fetch = fetch
-): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> => {
-  const params = {
-    part: 'snippet',
-    q: 'product review OR unboxing',
-    type: 'video',
-    maxResults: 15
-  };
-
-  const searchData = await youtubeFetch<APIResponse<{ id: { videoId: string } }>>(
-    'search', 
-    params, 
-    fetchFn
-  );
-
-  if (!searchData?.items?.length) {
-    return { videos: [] };
-  }
-
-  const videoIds = searchData.items.map(item => item.id.videoId).join(',');
-  
-  const videoData = await youtubeFetch<APIResponse<YouTubeVideo>>(
-    'videos', 
-    {
-      part: 'snippet,statistics,contentDetails',
-      id: videoIds
-    }, 
-    fetchFn
-  );
-
-  if (!videoData) return { videos: [] };
-
-  // Format video durations
-  videoData.items.forEach(video => {
-    if (video.contentDetails?.duration) {
-      video.contentDetails.duration = formatDuration(video.contentDetails.duration);
-    }
-  });
-
-  return {
-    videos: videoData.items || [],
-    nextPageToken: searchData.nextPageToken
-  };
+  return fetchVideos(fetchFn, { category, pageToken });
 }; 

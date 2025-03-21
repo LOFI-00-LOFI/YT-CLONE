@@ -1,39 +1,47 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { fetchVideoComments, fetchVideoCommentCount, type YouTubeComment } from '$lib';
 	import { ThumbsUp, ThumbsDown, MoreVertical } from 'lucide-svelte';
 	import { formatTimeAgo, formatNumber } from '$lib/utils/format';
 
-	export let videoId: string;
+	let { videoId } = $props<{
+		videoId: string;
+	}>();
 
-	let comments: YouTubeComment[] = [];
-	let totalComments = '0';
-	let loading = true;
-	let error: string | null = null;
-	let showAllComments = false;
+	let comments = $state<YouTubeComment[]>([]);
+	let totalComments = $state('0');
+	let loading = $state(true);
+	let error = $state<string | null>(null);
+	let showAllComments = $state(false);
+	
+	// Use a non-reactive variable to prevent infinite loops
+	let lastLoadedVideoId: string | null = null;
 
-	onMount(async () => {
-		try {
-			loading = true;
-			error = null;
+	async function loadComments() {
+		if (!videoId || videoId === lastLoadedVideoId) return;
+		
+		loading = true;
+		error = null;
 
-			// Load comment count and comments in parallel
-			const [countResult, commentsResult] = await Promise.all([
-				fetchVideoCommentCount(videoId, fetch),
-				fetchVideoComments(videoId, fetch)
-			]);
+		// Load comment count and comments in parallel
+		const [countResult, commentsResult] = await Promise.all([
+			fetchVideoCommentCount(videoId, fetch),
+			fetchVideoComments(videoId, fetch)
+		]);
 
-			totalComments = String(countResult);
-			comments = commentsResult.comments;
-		} catch (e) {
-			error = 'Failed to load comments';
-			console.error('Error loading comments:', e);
-		} finally {
-			loading = false;
+		totalComments = String(countResult);
+		comments = commentsResult.comments;
+		// Set the non-reactive tracking variable
+		lastLoadedVideoId = videoId;
+		loading = false;
+	}
+
+	$effect(() => {
+		if (videoId && videoId !== lastLoadedVideoId) {
+			loadComments();
 		}
 	});
 
-	$: displayedComments = showAllComments ? comments : comments.slice(0, 5);
+	let displayedComments = $derived(showAllComments ? comments : comments.slice(0, 5));
 </script>
 
 <div class="flex flex-col gap-4 mt-6">

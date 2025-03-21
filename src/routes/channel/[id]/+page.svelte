@@ -3,10 +3,10 @@
   import VideoCard from '$lib/components/VideoCard.svelte';
   import { formatNumber } from '$lib/utils/format';
   import type { YouTubeVideo } from '$lib';
+  import { ChannelSkeleton } from '$lib/components';
 
   export let data;
   const { channel, videos } = data;
-
 
   const tabs = [
     'Home',
@@ -23,43 +23,7 @@
 </script>
 
 {#if !channel}
-  <div class="flex flex-col min-h-screen animate-pulse">
-    <!-- Banner Skeleton -->
-    <div class="w-full h-[200px] bg-hover-bg"></div>
-    
-    <!-- Channel Info Skeleton -->
-    <div class="max-w-[1200px] mx-auto w-full px-4 py-4 sm:py-6">
-      <div class="flex gap-6 items-center">
-        <div class="w-[128px] h-[128px] rounded-full bg-hover-bg"></div>
-        <div class="flex-1 space-y-4">
-          <div class="h-6 bg-hover-bg rounded w-1/4"></div>
-          <div class="h-4 bg-hover-bg rounded w-1/3"></div>
-          <div class="h-4 bg-hover-bg rounded w-1/2"></div>
-        </div>
-        <div class="w-28 h-10 bg-hover-bg rounded-full"></div>
-      </div>
-
-      <!-- Tabs Skeleton -->
-      <div class="mt-8 border-b border-border-color">
-        <div class="flex gap-8">
-          {#each Array(5) as _}
-            <div class="h-4 bg-hover-bg rounded w-16"></div>
-          {/each}
-        </div>
-      </div>
-
-      <!-- Videos Grid Skeleton -->
-      <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-        {#each Array(12) as _}
-          <div class="flex flex-col gap-2">
-            <div class="aspect-video bg-hover-bg rounded-xl"></div>
-            <div class="h-4 bg-hover-bg rounded w-3/4"></div>
-            <div class="h-3 bg-hover-bg rounded w-1/2"></div>
-          </div>
-        {/each}
-      </div>
-    </div>
-  </div>
+  <ChannelSkeleton videoCount={12} />
 {:else}
   <div class="flex flex-col min-h-screen">
     <!-- Channel Banner -->

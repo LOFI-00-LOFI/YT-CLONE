@@ -1,16 +1,17 @@
 <script lang="ts">
-	export let size = 'md';
+	import { fade } from 'svelte/transition';
+	
+	let { size = 'md' } = $props<{
+		size?: string;
+	}>();
 
-	const sizes = {
-		sm: 'h-4 w-4',
-		md: 'h-8 w-8',
-		lg: 'h-12 w-12'
-	};
+	// Define size classes
+	const sizeClass = size === 'sm' ? 'h-4 w-4' : 
+	                 size === 'lg' ? 'h-12 w-12' : 
+	                 'h-8 w-8'; // Default to medium
 </script>
 
-{#key size}
-	<div
-		class="animate-spin rounded-full border-b-2 border-text-primary {sizes[size]}"
-		transition:fade
-	></div>
-{/key}
+<div
+	class="animate-spin rounded-full border-b-2 border-text-primary {sizeClass}"
+	transition:fade
+></div>

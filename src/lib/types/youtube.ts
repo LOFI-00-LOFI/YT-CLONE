@@ -1,12 +1,11 @@
-export interface Video {
-	id: string;
-	thumbnail: string;
-	title: string;
-	channel: string;
-	views: string;
-	uploadedAt: string;
-}
+/**
+ * YouTube API Type Definitions
+ * This file contains all interface definitions used for YouTube API interactions
+ */
 
+/**
+ * Main YouTube video interface for video data from the API
+ */
 export interface YouTubeVideo {
 	id: string;
 	snippet: {
@@ -32,6 +31,9 @@ export interface YouTubeVideo {
 	};
 }
 
+/**
+ * YouTube comment thread interface for comment data from the API
+ */
 export interface YouTubeComment {
 	id: string;
 	snippet: {
@@ -48,12 +50,18 @@ export interface YouTubeComment {
 	};
 }
 
+/**
+ * YouTube channel thumbnail interface
+ */
 export interface YouTubeChannelThumbnail {
 	url: string;
 	width: number;
 	height: number;
 }
 
+/**
+ * YouTube channel interface for channel data from the API
+ */
 export interface YouTubeChannel {
 	id: string;
 	snippet: {
@@ -77,6 +85,9 @@ export interface YouTubeChannel {
 	};
 }
 
+/**
+ * Generic API response wrapper interface
+ */
 export interface APIResponse<T> {
 	items: T[];
 	nextPageToken?: string;

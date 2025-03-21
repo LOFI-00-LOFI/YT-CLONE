@@ -4,6 +4,8 @@
   import Header from "$lib/components/Header.svelte";
   import { page } from '$app/stores';
   import { sidebarOpen } from '$lib/stores/ui';
+  import  { Toaster } from 'svelte-french-toast';
+
   
   function toggleSidebar() {
     sidebarOpen.update(value => !value);
@@ -20,6 +22,7 @@
 </script>
 
 <div class="h-screen flex flex-col bg-bg-primary text-text-primary">
+  <Toaster position="top-right" />
   <Header {toggleSidebar} />
   
   <div class="flex flex-1 overflow-hidden">

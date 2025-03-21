@@ -13,42 +13,23 @@
 		compact?: boolean;
 		thumbnailClass?: string;
 	}>();
-	let channelData: YouTubeChannel | null = $state(null);
+	let channelData = $state<YouTubeChannel | null>(null);
+	
+	// Use a non-reactive variable to prevent infinite loops
+	let lastLoadedChannelId: string | null = null;
 
 	$effect(() => {
-		fetchChannel(video.snippet.channelId, fetch).then((data) => {
-			channelData = data;
-		});
+		const channelId = video.snippet.channelId;
+		if (channelId && channelId !== lastLoadedChannelId) {
+			// Set this before the async operation to avoid multiple fetches
+			lastLoadedChannelId = channelId;
+			fetchChannel(channelId, fetch).then((data) => {
+				if (data) {
+					channelData = data;
+				}
+			});
+		}
 	});
-
-	function formatViews(viewCount: string): string {
-		const count = parseInt(viewCount);
-		if (count >= 1000000) {
-			return `${(count / 1000000).toFixed(1)}M`;
-		}
-		if (count >= 1000) {
-			return `${(count / 1000).toFixed(1)}K`;
-		}
-		return viewCount;
-	}
-
-	function formatDate(dateString: string): string {
-		const date = new Date(dateString);
-		const now = new Date();
-		const diff = now.getTime() - date.getTime();
-
-		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-		if (days > 365) {
-			return `${Math.floor(days / 365)} years ago`;
-		}
-		if (days > 30) {
-			return `${Math.floor(days / 30)} months ago`;
-		}
-		if (days > 0) {
-			return `${days} days ago`;
-		}
-		return 'Today';
-	}
 
 	function handleClick() {
 		goto(`/watch?v=${video.id}`);

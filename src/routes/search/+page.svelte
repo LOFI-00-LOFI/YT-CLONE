@@ -32,47 +32,40 @@
   async function loadMore() {
     if (state.loading || !state.hasMore || !state.searchQuery) return;
     
-    try {
-      state.loading = true;
-      state.error = null;
-      
-      const data = await searchVideos(state.searchQuery, fetch, state.nextPageToken);
-      
-      if (!data?.videos?.length) {
-        state.hasMore = false;
-        if (!state.videos.length) {
-          state.error = 'No results found';
-        }
-        return;
+    state.loading = true;
+    state.error = null;
+    
+    const data = await searchVideos(state.searchQuery, fetch, state.nextPageToken);
+    
+    if (!data?.videos?.length) {
+      state.hasMore = false;
+      if (!state.videos.length) {
+        state.error = 'No results found';
       }
-
-      state.hasMore = !!data.nextPageToken;
-      state.nextPageToken = data.nextPageToken;
-
-      const uniqueChannelIds = [...new Set(data.videos.map((v: YouTubeVideo) => v.snippet.channelId))];
-      await Promise.all(
-        uniqueChannelIds.map(async (channelId: string) => {
-          if (!state.channelDataMap[channelId]) {
-            try {
-              const channelData = await fetchChannel(channelId, fetch);
-              state.channelDataMap[channelId] = channelData;
-            } catch (e) {
-              console.error('Error fetching channel:', e);
-            }
-          }
-        })
-      );
-
-      state.videos = state.nextPageToken 
-        ? [...state.videos, ...data.videos] 
-        : data.videos;
-    } catch (e) {
-      state.error = 'Failed to load search results';
-      console.error(e);
-    } finally {
       state.loading = false;
       state.initialLoad = false;
+      return;
     }
+
+    state.hasMore = !!data.nextPageToken;
+    state.nextPageToken = data.nextPageToken;
+
+    const uniqueChannelIds = [...new Set(data.videos.map((v: YouTubeVideo) => v.snippet.channelId))];
+    await Promise.all(
+      uniqueChannelIds.map(async (channelId: string) => {
+        if (!state.channelDataMap[channelId]) {
+          const channelData = await fetchChannel(channelId, fetch);
+          state.channelDataMap[channelId] = channelData;
+        }
+      })
+    );
+
+    state.videos = state.nextPageToken 
+      ? [...state.videos, ...data.videos] 
+      : data.videos;
+    
+    state.loading = false;
+    state.initialLoad = false;
   }
 
   function resetSearch() {

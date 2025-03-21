@@ -1,5 +1,4 @@
 <script lang="ts">
-  import VideoGrid from "$lib/components/VideoGrid.svelte";
   import CategoryPills from "$lib/components/CategoryPills.svelte";
   import { sidebarOpen } from '$lib/stores/ui';
   import { currentCategory } from '$lib/stores/category';
@@ -8,60 +7,80 @@
   import VideoCard from '$lib/components/VideoCard.svelte';
   import { fade } from 'svelte/transition';
 
-  let videos: YouTubeVideo[] = [];
-  let loading = true;
-  let error: string | null = null;
-  let nextPageToken: string | undefined = undefined;
-  let hasMore = true;
+  // Get data from server
+  let { initialVideos, initialNextPageToken } = $props<{
+    initialVideos: YouTubeVideo[];
+    initialNextPageToken?: string;
+  }>();
+
+  let videos = $state<YouTubeVideo[]>(initialVideos);
+  let loading = $state(false);
+  let error = $state<string | null>(null);
+  let nextPageToken = $state<string | undefined>(initialNextPageToken);
+  let hasMore = $state(!!initialNextPageToken);
+  
+  // Use a non-reactive variable to prevent reactivity loops
+  let lastLoadedCategory: string | null = null;
+  // Track if we're already loading more to prevent duplicate calls
+  let isLoadingMore = false;
 
   async function loadVideos(pageToken?: string) {
-    try {
-      loading = true;
-      error = null;
-      const data = await fetchVideos(fetch, { 
-        pageToken, 
-        category: $currentCategory 
-      });
-      
-      if (pageToken) {
-        videos = [...videos, ...data.videos];
-      } else {
-        videos = data.videos;
-      }
-      nextPageToken = data.nextPageToken;
-      hasMore = !!data.nextPageToken;
-    } catch (e) {
-      error = 'Failed to load videos';
-    } finally {
-      loading = false;
+    // Exit early if we're already loading (prevents duplicate calls)
+    if (loading) return;
+    
+    loading = true;
+    error = null;
+    const category = $currentCategory;
+    
+    // If already loaded this category and just appending more pages, don't mark as lastLoadedCategory
+    if (!pageToken) {
+      // Set non-reactive variable to track loaded category
+      lastLoadedCategory = category;
+    }
+    
+    const data = await fetchVideos(fetch, { 
+      pageToken, 
+      category
+    });
+    
+    if (pageToken) {
+      videos = [...videos, ...data.videos];
+    } else {
+      videos = data.videos;
+    }
+    
+    nextPageToken = data.nextPageToken;
+    hasMore = !!data.nextPageToken;
+    loading = false;
+    
+    // If this was a loadMore operation, reset the flag
+    if (pageToken) {
+      isLoadingMore = false;
     }
   }
 
   async function loadMore() {
-    if (!nextPageToken || loading) return;
-    loading = true;
+    // Prevent duplicate calls to loadMore
+    if (!nextPageToken || loading || isLoadingMore) return;
+    
+    isLoadingMore = true;
     await loadVideos(nextPageToken);
   }
 
-  // Initial load
-  loadVideos();
-
   // Watch category changes to reset and reload
-  $: if ($currentCategory) {
-    videos = [];
-    nextPageToken = undefined;
-    hasMore = true;
-    loading = true;
-    loadVideos();
-  }
+  $effect(() => {
+    const currentCat = $currentCategory;
+    if (currentCat !== lastLoadedCategory && !loading) {
+      videos = [];
+      nextPageToken = undefined;
+      hasMore = true;
+      loadVideos();
+    }
+  });
 </script>
 
 <div class="flex flex-col">
   <CategoryPills />
-  
-  <div class="px-4 md:px-6 lg:px-8 pb-4 max-w-[2400px] mx-auto w-full">
-    <VideoGrid sidebarOpen={$sidebarOpen} />
-  </div>
 
   <div class="p-4 sm:px-6 lg:px-8 ml-0 md:ml-10">
     {#if error}

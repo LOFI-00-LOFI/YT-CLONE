@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { currentCategory } from '$lib/stores/category';
-	let scrollContainer: HTMLDivElement;
+	let scrollContainer = $state<HTMLDivElement | null>(null);
 
 	const categories = [
 		{ id: 'home', label: 'All' },
@@ -13,8 +13,8 @@
 		{ id: 'fashion', label: 'Fashion & Beauty' }
 	];
 
-	// Use the store value
-	$: selectedCategory = $currentCategory;
+	// Use the store value with $derived
+	let selectedCategory = $derived($currentCategory);
 
 	function selectCategory(categoryId: string) {
 		currentCategory.set(categoryId);
@@ -34,6 +34,7 @@
 <div class="sticky top-[0] z-10 bg-bg-primary">
 	<div class="relative flex items-center">
 		<!-- Left scroll button -->
+		<!-- svelte-ignore a11y_consider_explicit_label -->
 		<button
 			class="absolute left-0 z-10 p-2 bg-gradient-to-r from-bg-primary to-transparent"
 			onclick={() => scroll('left')}
@@ -63,6 +64,7 @@
 		</div>
 
 		<!-- Right scroll button -->
+		<!-- svelte-ignore a11y_consider_explicit_label -->
 		<button
 			class="absolute right-0 z-10 p-2 bg-gradient-to-l from-bg-primary to-transparent"
 			onclick={() => scroll('right')}

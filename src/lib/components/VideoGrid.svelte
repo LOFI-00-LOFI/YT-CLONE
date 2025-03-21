@@ -1,38 +1,43 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
 	import { currentCategory } from '$lib/stores/category';
 	import { fetchVideos, type YouTubeVideo } from '$lib';
 	import VideoCard from './VideoCard.svelte';
 
-	export let sidebarOpen = false;
+	let { sidebarOpen = false } = $props<{
+		sidebarOpen?: boolean;
+	}>();
 
-	let videos: YouTubeVideo[] = [];
-	let loading = true;
-	let error: string | null = null;
+	let videos = $state<YouTubeVideo[]>([]);
+	let loading = $state(true);
+	let error = $state<string | null>(null);
+	
+	// Use a non-reactive variable to prevent reactivity loops
+	let lastLoadedCategory: string | null = null;
+	// Flag to prevent duplicate loads
+	let isLoadingData = false;
 
 	async function loadVideos(category: string) {
-		try {
-			loading = true;
-			error = null;
-			const data = await fetchVideos(fetch, { category });
-			videos = data.videos;
-		} catch (e) {
-			error = 'Failed to load videos';
-			console.error('Error loading videos:', e);
-		} finally {
-			loading = false;
-		}
+		// Skip if already loading this category or already in the process of loading
+		if (category === lastLoadedCategory || isLoadingData) return;
+		
+		loading = true;
+		isLoadingData = true;
+		error = null;
+		
+		const data = await fetchVideos(fetch, { category });
+		videos = data.videos;
+		lastLoadedCategory = category;
+		
+		loading = false;
+		isLoadingData = false;
 	}
 
-	// Subscribe to category changes
-	$: {
-		if ($currentCategory) {
-			loadVideos($currentCategory);
+	// Load videos when category changes
+	$effect(() => {
+		const category = $currentCategory;
+		if (category && category !== lastLoadedCategory && !isLoadingData) {
+			loadVideos(category);
 		}
-	}
-
-	onMount(() => {
-		loadVideos($currentCategory);
 	});
 </script>
 
